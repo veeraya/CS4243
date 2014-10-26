@@ -25,6 +25,9 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		self.inputDepth_btn.clicked.connect(self.makeVisibleNumberOfPointsInput)
 		self.initPointSelection_btn.clicked.connect(self.getNumberOfPointsInput)
 		self.label.mousePressEvent = self.getPos		#this gets the position of mousePress over label.
+		self.enterDepth_btn.clicked.connect(self.getDepthUserInput)
+		self.reset_btn.clicked.connect(self.resetAllMembers)
+		self.reset_btn.setToolTip('To reset all members of this form')
 
 	#Function to load image into Pixmap.
 	def loadImageOnUI(self,filename):
@@ -73,12 +76,13 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		self.label_x.setText(str(curr_x))
 		self.label_y.setText(str(curr_y))
 		#self.drawPoint(curr_x,curr_y)
-		self.initPointSelection_btn.setVisible(True)
+		
 		numberOfPoints = int(self.numberOfPoints_text.toPlainText())
 		
 		setsOfPoints.append((curr_x,curr_y))
 		count += 1
 		if(count == numberOfPoints):
+			self.initPointSelection_btn.setVisible(True)
 			count = 0
 
 				
@@ -91,23 +95,24 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		self.numberOfPoints_text.setVisible(True)
 
 		
-	#Function to receive the "number of points" value from the text box :: BTN "Select Points on the Image"
+	#Function to receive the "number of points" value from the text box :: BTN "Select Points clicked on the Image"
 	def getNumberOfPointsInput(self):
 		
 		global numberOfPoints
 		global listOfSetsOfPoints
 		global setsOfPoints
-
+		
 		if ((numberOfPoints is None) or numberOfPoints == 0):
-			msgBox = QMessageBox()
-			msgBox.setText("You need to enter number of points first")
-			msgBox._exec()
+			
+			QtGui.QMessageBox.critical(self, "Error", "You need to enter number of points first")
+			return
 			 
 		
 		#self.label_toTest.setText(str(numberOfPoints))
 		self.enterDepth_btn.setVisible(True)
 		listOfSetsOfPoints.append(setsOfPoints)
 		self.label_toTest.setText(str(listOfSetsOfPoints))
+		setsOfPoints = [] 				#Reinitializing sub-list setsOfPoints for next selection
 	
 	
 
@@ -125,7 +130,30 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 	        qp.begin(self)
 		self.drawPoints(qp)
 		
+	#Function to enter depth of the selected points  BTN::enterDepth_btn
+	def getDepthUserInput(self):
+
+		depth, ok = QtGui.QInputDialog.getInt(self, "Depth from camera",
+	        "Enter depth of the selected points", QtGui.QLineEdit.Normal, 1, 1073741824)
+		if ok:
+			strng = "Depth entered is : " + str(depth)
+			self.label_toTest2.setText(strng)
+		#else:
+		#	self.label_toTest2.setText("Not able to receive depth value")
+		
 	
+	#Function to reset all the variables and parameters to input next sets of points
+	def resetAllMembers(self):
+		self.label_5.setVisible(False)					## Re-initializing the UI as it was
+		self.numberOfPoints_label.setVisible(False)			## right after loading the photo
+		self.numberOfPoints_text.setVisible(False)			##
+		self.initPointSelection_btn.setVisible(False)
+		self.enterDepth_btn.setVisible(False)
+		self.label_toTest.setText("")
+		self.label_toTest2.setText("")
+		self.label_x.setText("")
+		self.label_y.setText("")
+		self.numberOfPoints_text.clear()
 
 app = QtGui.QApplication(sys.argv)
 imgLoader = ImageLoad()
