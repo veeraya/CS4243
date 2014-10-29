@@ -11,6 +11,9 @@ numberOfPoints = 0
 count = 0
 setsOfPoints = []
 listOfSetsOfPoints = []
+numberOfBuildingSelected = 1
+enteredDepth = 0
+listBuildingPointsWithDepth = []
 class ImageLoad(QtGui.QMainWindow, form_class):
 	def __init__(self, parent=None):
 		QtGui.QMainWindow.__init__(self, parent)
@@ -132,18 +135,26 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		
 	#Function to enter depth of the selected points  BTN::enterDepth_btn
 	def getDepthUserInput(self):
-
+		global enteredDepth
+		global listBuildingPointsWithDepth
 		depth, ok = QtGui.QInputDialog.getInt(self, "Depth from camera",
 	        "Enter depth of the selected points", QtGui.QLineEdit.Normal, 1, 1073741824)
 		if ok:
 			strng = "Depth entered is : " + str(depth)
-			self.label_toTest2.setText(strng)
+			self.label_toTest2.setText(str(listBuildingPointsWithDepth))
+		
+		enteredDepth = depth;
+		
 		#else:
 		#	self.label_toTest2.setText("Not able to receive depth value")
 		
 	
 	#Function to reset all the variables and parameters to input next sets of points
 	def resetAllMembers(self):
+	
+		global numberOfBuildingSelected
+		global enteredDepth
+		global listBuildingPointsWithDepth
 		self.label_5.setVisible(False)					## Re-initializing the UI as it was
 		self.numberOfPoints_label.setVisible(False)			## right after loading the photo
 		self.numberOfPoints_text.setVisible(False)			##
@@ -154,6 +165,13 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		self.label_x.setText("")
 		self.label_y.setText("")
 		self.numberOfPoints_text.clear()
+	
+		#Appending details of user input data to a list. This will contain number of building, points selected for that 
+		#building and the depth input.
+		temp = [numberOfBuildingSelected,setsOfPoints,enteredDepth]
+		listBuildingPointsWithDepth.append(temp)
+		
+		numberOfBuildingSelected += 1
 
 app = QtGui.QApplication(sys.argv)
 imgLoader = ImageLoad()

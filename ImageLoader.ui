@@ -273,12 +273,15 @@ selected points</string>
      <rect>
       <x>1060</x>
       <y>370</y>
-      <width>151</width>
-      <height>17</height>
+      <width>311</width>
+      <height>241</height>
      </rect>
     </property>
     <property name="text">
      <string/>
+    </property>
+    <property name="wordWrap">
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QPushButton" name="reset_btn">
@@ -286,16 +289,16 @@ selected points</string>
      <rect>
       <x>1060</x>
       <y>620</y>
-      <width>111</width>
+      <width>241</width>
       <height>41</height>
      </rect>
     </property>
     <property name="toolTip">
-     <string extracomment="To reset all members of this form"/>
+     <string/>
     </property>
     <property name="text">
      <string>Select next set
- of points</string>
+ of points (for another building)</string>
     </property>
    </widget>
   </widget>
