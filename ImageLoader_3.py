@@ -192,6 +192,62 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		
 
 
+
+	def closeEvent(self, event):
+
+		global listBuildingPointsWithDepth
+		
+		self.getBuildingPixelsWDepth(listBuildingPointsWithDepth)
+		f = open("PixelandDepth.txt","w")
+		f.write("Building/structure poitns : "+str(listBuildingPointsWithDepth)+"\n")
+		#f.write("Sky or Front Grass : "+str(listSkyGrassWithDepth)+"\n")
+		f.close
+
+
+
+	##Function to read the list of building vertices with depths and apply that depth to all the pixels of that building
+	def getBuildingPixelsWDepth(self,listWDepth):
+		global listBuildingPointsWithDepth
+		listWDepth = listBuildingPointsWithDepth
+		global listPixelWDepth
+		for i in range(len(listWDepth)):
+			depth = listWDepth[i][2]
+			list_x = self.getListX(listWDepth[i][1])			##Need to define functions getListX / Y
+			list_y = self.getListY(listWDepth[i][1])
+
+			min_x = min(list_x)
+			min_y = min(list_y)
+			max_x = max(list_x)
+			max_y = max(list_y)
+				
+			buildingShapeArray = np.zeros((len(listWDepth[i][1]),2))
+			for j in range(len(listWDepth[i][1])):
+				buildingShapeArray[j][0] = listWDepth[i][1][j][0]
+				buildingShapeArray[j][1] = listWDepth[i][1][j][1]
+
+		
+			p = min_x
+			q = min_y
+			poly = mpPath.Path(buildingShapeArray,codes=None,closed=True)
+			for p in range(max_x):
+				for q in range(max_y):
+					point = (p,q)
+					isPointInside = bool(poly.contains_point(point,transform=None,radius=0.0))
+					if isPointInside:
+						listPixelWDepth.append([point,depth])
+		
+		f = open("AllPixelsWDepth.txt","w")
+		f.write("min_x : "+str(min_x)+"\n")
+		f.write("min_y : "+str(min_y)+"\n")
+		f.write("max_x : "+str(max_x)+"\n")
+		f.write("max_y : "+str(max_y)+"\n")
+
+		f.write("List Pixel with Depth -- the input to the function : "+str(listWDepth)+"\n")
+
+		f.write("Building/structure points : "+str(listPixelWDepth)+"\n")
+		f.write("\n Length of list  : "+str(len(listPixelWDepth)))
+	
+
 	
 	#Function to reset all the variables and parameters to input next sets of points
 	def resetAllMembers(self):
@@ -215,43 +271,11 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 				self.skyGrassCheck.setEnabled(False)
 				self.skyGrassCheck.setCheckState(0)
 		
-	
-
-	##Function to read the list of building vertices with depths and apply that depth to all the pixels of that building
-	def getBuildingPixelsWDepth(self,listWDepth):
-		global listPixelWDepth
-		for i in range(len(listWDepth)):
-			depth = listWDepth[i][2]
-			list_x = getListX(listWDepth(listWDepth[i][1]))			##Need to define functions getListX / Y
-			list_y = getListY(listWDepth(listWDepth[i][1]))
-
-			min_x = min(lsit_x)
-			min_y = min(list_y)
-			max_x = max(list_x)
-			max_y = max(list_y)
-				
-			buildingShapeArray = np.zeros((len(listWDepth[i][1]),2))
-			for j in range(len(listWDepth[i][1])):
-				buildingShapeArray[j][0] = listWDepth[i][1][j][0]
-				buildingShapeArray[j][1] = listWDepth[i][1][j][1]
-
 		
-			p = min_x
-			q = min_y
-			poly = mpPath.Path(buildingShapeArray,code=None,closed=True)
-			for p in range(max_x):
-				for q in range(max_y):
-					point = (p,q)
-					isPointInside = bool(poly.contains_point(point,transform=None,radius=0.0))
-					if isPointInside:
-						listPixelWDepth.append(point,depth)
-		
-		f = open("AllPixelsWDepth.txt","w")
-		f.write("Building/structure points : "+str(listPixelWDepth)+"\n")
-	
+
 
 	#Function to get list of only X coordinates out of a given list of Points(x,y)
-	def getListX(listPoints):
+	def getListX(self,listPoints):
 		list_x = []
 		for i in range(len(listPoints)):
 			list_x.append(listPoints[i][0])
@@ -259,21 +283,14 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 
 
 	#Function to get list of only Y coordinates out of a given list of Points(x,y)
-	def getListY(listPoints):
+	def getListY(self,listPoints):
 		list_y = []
 		for i in range(len(listPoints)):
 			list_y.append(listPoints[i][1])
 		return list_y
 
 	
-	def closeEvent(self, event):
-		global listBuildingPointsWithDepth
-		
-		getBuildingPixelsWDepth(listBuildingPointsWithDepth)
-		f = open("PixelandDepth.txt","w")
-		f.write("Building/structure poitns : "+str(listBuildingPointsWithDepth)+"\n")
-		f.write("Sky or Front Grass : "+str(listSkyGrassWithDepth)+"\n")
-		f.close
+	
 
 
 app = QtGui.QApplication(sys.argv)
