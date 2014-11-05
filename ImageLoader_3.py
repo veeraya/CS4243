@@ -2,6 +2,7 @@ import sys
 from PyQt4 import QtCore, QtGui, uic
 import numpy as np
 import matplotlib.path as mpPath
+import cv2 as cv
  
 form_class = uic.loadUiType("ImageLoader.ui")[0]
 
@@ -174,7 +175,7 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 			temp = ["Sky or grass",setsOfPoints,enteredDepth]
 			listSkyGrassWithDepth.append(temp)		
 		
-		if len(listSkyGrassWithDepth) != 0:
+		if (len(listSkyGrassWithDepth) != 0):
 			QtGui.QMessageBox.critical(self, "Warning", "Points entered for Sky or Grass are  "+str(listSkyGrassWithDepth))
 			
 
@@ -196,11 +197,22 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 	def closeEvent(self, event):
 
 		global listBuildingPointsWithDepth
+		global listSkyGrassWithDepth
+		print "\n Close event called"
+		print "\nlistBuildingPointsWithDepth : ",listBuildingPointsWithDepth
+		print "\nlistSkyGrassWithDepth",listSkyGrassWithDepth
+		if(len(listSkyGrassWithDepth) != 0):
+			combinedList = listBuildingPointsWithDepth
+			for i in range(len(listSkyGrassWithDepth)):
+				combinedList.append(listSkyGrassWithDepth[i])
+
+			self.getBuildingPixelsWDepth(combinedList)
 		
-		self.getBuildingPixelsWDepth(listBuildingPointsWithDepth)
+		elif(len(listSkyGrassWithDepth) == 0):
+			self.getBuildingPixelsWDepth(listBuildingPointsWithDepth)
 		f = open("PixelandDepth.txt","w")
-		f.write("Building/structure poitns : "+str(listBuildingPointsWithDepth)+"\n")
-		#f.write("Sky or Front Grass : "+str(listSkyGrassWithDepth)+"\n")
+		f.write("Building/structure points : "+str(listBuildingPointsWithDepth)+"\n")
+		f.write("Sky or Front Grass : "+str(listSkyGrassWithDepth)+"\n")
 		f.close
 
 
@@ -208,8 +220,12 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 	##Function to read the list of building vertices with depths and apply that depth to all the pixels of that building
 	def getBuildingPixelsWDepth(self,listWDepth):
 		global listBuildingPointsWithDepth
-		listWDepth = listBuildingPointsWithDepth
-		global listPixelWDepth
+		#listWDepth = listBuildingPointsWithDepth
+		global listPixelWDepth			#This list holds all the pizels of a plane for which points has been selected
+		
+	#	QtGui.QMessageBox.critical(self, "Error", "Final list with depth is ",str(listWDepth))
+		print "\nList received inside getBuildingPixelsWDepth function is : ",listWDepth
+
 		for i in range(len(listWDepth)):
 			depth = listWDepth[i][2]
 			list_x = self.getListX(listWDepth[i][1])			##Need to define functions getListX / Y
@@ -220,22 +236,41 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 			max_x = max(list_x)
 			max_y = max(list_y)
 				
-			buildingShapeArray = np.zeros((len(listWDepth[i][1]),2))
-			for j in range(len(listWDepth[i][1])):
-				buildingShapeArray[j][0] = listWDepth[i][1][j][0]
-				buildingShapeArray[j][1] = listWDepth[i][1][j][1]
+			buildingShapeArray = np.zeros((len(listWDepth[i][1])+1,2))
+			for j in range(len(listWDepth[i][1])+1):
+				if (j <= (len(listWDepth[i][1]) - 1)):
+					buildingShapeArray[j][0] = listWDepth[i][1][j][0]
+					buildingShapeArray[j][1] = listWDepth[i][1][j][1]
+
+				elif (j == len(listWDepth[i][1])):
+					buildingShapeArray[j][0] = listWDepth[i][1][0][0]
+					buildingShapeArray[j][1] = listWDepth[i][1][0][1]
 
 		
 			p = min_x
 			q = min_y
 			poly = mpPath.Path(buildingShapeArray,codes=None,closed=True)
-			for p in range(max_x):
-				for q in range(max_y):
-					point = (p,q)
-					isPointInside = bool(poly.contains_point(point,transform=None,radius=0.0))
-					if isPointInside:
-						listPixelWDepth.append([point,depth])
+
+			if(str(listWDepth[i][0]) != "Sky or grass"):
+				for p in range(min_x,max_x,1):
+					for q in range(min_y,max_y,1):
+						point = (p,q)
+						isPointInside = bool(poly.contains_point(point,transform=None,radius=0.0))
+						if isPointInside:
+							listPixelWDepth.append([point,depth])
+			elif(str(listWDepth[i][0]) == "Sky or grass"):
+				for p in range(min_y,max_y,1):
+					for q in range(min_x,max_x,1):
+						point = (q,p)
+						isPointInside = bool(poly.contains_point(point,transform=None,radius=0.0))
+						if isPointInside:
+							listPixelWDepth.append([point,(depth+(max_y-p))])
 		
+		#f1 = open("BuildingShape.txt","w")
+		#f1.write("Building Shape array : "+str(buildingShapeArray)+"\n")
+
+		self.toTestPixelSelection(listPixelWDepth)
+
 		f = open("AllPixelsWDepth.txt","w")
 		f.write("min_x : "+str(min_x)+"\n")
 		f.write("min_y : "+str(min_y)+"\n")
@@ -243,6 +278,7 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		f.write("max_y : "+str(max_y)+"\n")
 
 		f.write("List Pixel with Depth -- the input to the function : "+str(listWDepth)+"\n")
+
 
 		f.write("Building/structure points : "+str(listPixelWDepth)+"\n")
 		f.write("\n Length of list  : "+str(len(listPixelWDepth)))
@@ -290,7 +326,15 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		return list_y
 
 	
-	
+	#Function to test how points are getting selected
+	def toTestPixelSelection(self, pixelWDepth):
+		img = cv.imread('project.jpeg')
+		for i in range(len(pixelWDepth)):
+			img[pixelWDepth[i][0][1]][pixelWDepth[i][0][0]][0] = 0
+			img[pixelWDepth[i][0][1]][pixelWDepth[i][0][0]][1] = 0
+			img[pixelWDepth[i][0][1]][pixelWDepth[i][0][0]][2] = 0
+		
+		cv.imwrite('project_selected_Pixels.jpeg',img)
 
 
 app = QtGui.QApplication(sys.argv)
