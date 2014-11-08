@@ -225,7 +225,7 @@
     <property name="geometry">
      <rect>
       <x>1210</x>
-      <y>100</y>
+      <y>150</y>
       <width>51</width>
       <height>31</height>
      </rect>
@@ -235,7 +235,7 @@
     <property name="geometry">
      <rect>
       <x>1050</x>
-      <y>90</y>
+      <y>140</y>
       <width>161</width>
       <height>41</height>
      </rect>
@@ -251,7 +251,7 @@
     <property name="geometry">
      <rect>
       <x>1050</x>
-      <y>150</y>
+      <y>200</y>
       <width>151</width>
       <height>51</height>
      </rect>
@@ -265,7 +265,7 @@ on the Image</string>
     <property name="geometry">
      <rect>
       <x>1050</x>
-      <y>220</y>
+      <y>270</y>
       <width>151</width>
       <height>51</height>
      </rect>
@@ -279,7 +279,7 @@ selected points</string>
     <property name="geometry">
      <rect>
       <x>1050</x>
-      <y>310</y>
+      <y>360</y>
       <width>311</width>
       <height>91</height>
      </rect>
@@ -295,7 +295,7 @@ selected points</string>
     <property name="geometry">
      <rect>
       <x>1050</x>
-      <y>430</y>
+      <y>480</y>
       <width>221</width>
       <height>231</height>
      </rect>
@@ -335,6 +335,16 @@ selected points</string>
     </property>
     <property name="text">
      <string>Input for Sky or Front Grass</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="optionsList">
+    <property name="geometry">
+     <rect>
+      <x>1050</x>
+      <y>80</y>
+      <width>181</width>
+      <height>27</height>
+     </rect>
     </property>
    </widget>
   </widget>

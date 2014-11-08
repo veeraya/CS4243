@@ -5,23 +5,31 @@ import matplotlib.path as mpPath
 import cv2 as cv
  
 form_class = uic.loadUiType("ImageLoader.ui")[0]
+img = cv.imread("project.jpeg")
 
 x = 0.0
 y = 0.0
 curr_x = 0
 curr_y = 0
-numberOfPoints = 0
+numberOfPoints = 0			#number of points selected - value is visible in the output text file
 count = 0
-setsOfPoints = []
+setsOfPoints = []			#A local list to hold the pixels selected for individual structures at a time.
 listOfSetsOfPoints = []
 numberOfBuildingSelected = 1
 enteredDepth = 0
-listBuildingPointsWithDepth = []
-listSkyGrassWithDepth = []
+listBuildingPointsWithDepth = []	#stores pixel of building selected and corresponding depth entered
+listSkyGrassWithDepth = []		#stores pixel of Sky or Grass selected and corresponding depth entered
 skyOrGrassDone = 0
-listPixelWDepth = [] 		#List to hold all pixels and correspoding depth
+pixmap_2 = 0
+listPixelWDepth = [] 			#List to hold all pixels and correspoding depth
+mat_allPixelWDepth = np.ones((img.shape[0],img.shape[1],3),dtype = object) 	
+					#Matrix to store depth for corresponding pixel
+
+selectionOption = ['Buildings - front face', 'Building - side face','Grass','Sky']
+
 class ImageLoad(QtGui.QMainWindow, form_class):
 	def __init__(self, parent=None):
+		global selectionOption
 		QtGui.QMainWindow.__init__(self, parent)
 	        self.setupUi(self)
 		self.loadImg_btn.clicked.connect(self.loadImageOnClick)
@@ -38,7 +46,8 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		self.enterDepth_btn.clicked.connect(self.getDepthUserInput)
 		self.reset_btn.clicked.connect(self.resetAllMembers)
 		self.reset_btn.setToolTip('To reset all members of this form')
-		
+		self.optionsList.addItems(selectionOption)
+
 
 	#Function to load image into Pixmap.
 	def loadImageOnUI(self,filename):
@@ -52,11 +61,9 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 	def loadImageOnClick(self):
 		global x
 		global y
+		global pixmap_2
 		filename = QtGui.QFileDialog.getOpenFileName(self, 'Open File', '.') 		#Open file dialog box
 
-#		self.label.setScaledContents(True);
-#		label_width = self.label.width()
-#		label_height = self.label.height()
 		#pixmap_2 = (self.loadImageOnUI(filename)).scaled(label_width,label_height)
 		pixmap_2 = self.loadImageOnUI(filename)			#loading image into pixmap that is selected from open dialog box
 		self.label.width = pixmap_2.width()			#Setting width x height of label (where image is shown) as the
@@ -80,7 +87,7 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		global count 
 		global curr_x
 		global curr_y
-		
+		global pixmap_2
 
 		self.label_5.setVisible(True)
 		curr_x = event.pos().x()
@@ -100,7 +107,10 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 				count = 0
 
 				
-
+		img = QtGui.QImage(pixmap_2.toImage())			##Showing a dot for every click on the image
+		img.setPixel(curr_x,curr_y,255)				#
+		pixmap_2 = pixmap_2.fromImage(img)			#
+		self.label.setPixmap(pixmap_2)				#
 	
 
 	#Function to enable text box to input number of points to be entered
@@ -148,6 +158,7 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 
 	
 
+	
 	#Function to enter depth of the selected points  BTN::enterDepth_btn
 	def getDepthUserInput(self):
 		global enteredDepth
@@ -155,6 +166,7 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		global numberOfBuildingSelected
 		global setsOfPoints
 		global skyOrGrassDone
+		selectedOption = self.optionsList.currentText()
 		depth, ok = QtGui.QInputDialog.getInt(self, "Depth from camera",
 	        "Enter depth of the selected points", QtGui.QLineEdit.Normal, 1, 1073741824)
 
@@ -163,22 +175,22 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		#Appending details of user input data to a list. This will contain identifier of building, points selected for that 
 		#building and the depth input.
 
-		if(not self.skyGrassCheck.isChecked()):
-			
+		if((selectedOption != 'Sky' or selectedOption != 'Grass') and selectedOption == 'Buildings - front face'):
+										#not self.skyGrassCheck.isChecked()):
+									
 			QtGui.QMessageBox.critical(self, "Warning", "sets of points just selected "+str(setsOfPoints))
 			temp = [numberOfBuildingSelected,setsOfPoints,enteredDepth]
-			QtGui.QMessageBox.critical(self, "Warning", "CHECK BOX NOT SELECTED ")
+			QtGui.QMessageBox.critical(self, "Warning", "THIS IS NOT AN INPUT FOR SKY OR GRASS ")
 			listBuildingPointsWithDepth.append(temp)
 			numberOfBuildingSelected += 1
-		else:
+		elif(selectedOption != 'Sky' or selectedOption != 'Grass'):
 			skyOrGrassDone+=1
-			temp = ["Sky or grass",setsOfPoints,enteredDepth]
+			temp = [selectedOption,setsOfPoints,enteredDepth]
 			listSkyGrassWithDepth.append(temp)		
 		
 		if (len(listSkyGrassWithDepth) != 0):
-			QtGui.QMessageBox.critical(self, "Warning", "Points entered for Sky or Grass are  "+str(listSkyGrassWithDepth))
+			QtGui.QMessageBox.critical(self, "Warning", "Points entered for Sky and/or Grass are  "+str(listSkyGrassWithDepth))
 			
-
 		
 		if ok:
 			strng = "Depth entered is : " + str(depth)
@@ -188,8 +200,6 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		
 		
 		
-		#else:
-		#	self.label_toTest2.setText("Not able to receive depth value")
 		
 
 
@@ -198,6 +208,8 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 
 		global listBuildingPointsWithDepth
 		global listSkyGrassWithDepth
+		global mat_allPixelWDepth
+		print str(self.optionsList.currentText())
 		print "\n Close event called"
 		print "\nlistBuildingPointsWithDepth : ",listBuildingPointsWithDepth
 		print "\nlistSkyGrassWithDepth",listSkyGrassWithDepth
@@ -210,6 +222,7 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		
 		elif(len(listSkyGrassWithDepth) == 0):
 			self.getBuildingPixelsWDepth(listBuildingPointsWithDepth)
+
 		f = open("PixelandDepth.txt","w")
 		f.write("Building/structure points : "+str(listBuildingPointsWithDepth)+"\n")
 		f.write("Sky or Front Grass : "+str(listSkyGrassWithDepth)+"\n")
@@ -219,14 +232,15 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 
 	##Function to read the list of building vertices with depths and apply that depth to all the pixels of that building
 	def getBuildingPixelsWDepth(self,listWDepth):
+		global mat_allPixelWDepth
 		global listBuildingPointsWithDepth
 		#listWDepth = listBuildingPointsWithDepth
-		global listPixelWDepth			#This list holds all the pizels of a plane for which points has been selected
+		global listPixelWDepth			#This list holds all the pixels of a plane for which points has been selected
 		
-	#	QtGui.QMessageBox.critical(self, "Error", "Final list with depth is ",str(listWDepth))
 		print "\nList received inside getBuildingPixelsWDepth function is : ",listWDepth
 
 		for i in range(len(listWDepth)):
+			
 			depth = listWDepth[i][2]
 			list_x = self.getListX(listWDepth[i][1])			##Need to define functions getListX / Y
 			list_y = self.getListY(listWDepth[i][1])
@@ -251,23 +265,28 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 			q = min_y
 			poly = mpPath.Path(buildingShapeArray,codes=None,closed=True)
 
-			if(str(listWDepth[i][0]) != "Sky or grass"):
+			if(str(listWDepth[i][0]) != "Sky" and str(listWDepth[i][0]) != "Grass"):
 				for p in range(min_x,max_x,1):
 					for q in range(min_y,max_y,1):
 						point = (p,q)
 						isPointInside = bool(poly.contains_point(point,transform=None,radius=0.0))
 						if isPointInside:
 							listPixelWDepth.append([point,depth])
-			elif(str(listWDepth[i][0]) == "Sky or grass"):
+							mat_allPixelWDepth[p,q,0] = depth 
+			elif(str(listWDepth[i][0]) == "Sky" or str(listWDepth[i][0]) == "Grass"):
 				for p in range(min_y,max_y,1):
 					for q in range(min_x,max_x,1):
 						point = (q,p)
 						isPointInside = bool(poly.contains_point(point,transform=None,radius=0.0))
 						if isPointInside:
 							listPixelWDepth.append([point,(depth+(max_y-p))])
+							mat_allPixelWDepth[p,q,0] = depth
+
+		
 		
 		#f1 = open("BuildingShape.txt","w")
 		#f1.write("Building Shape array : "+str(buildingShapeArray)+"\n")
+		
 
 		self.toTestPixelSelection(listPixelWDepth)
 
@@ -280,7 +299,9 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		f.write("List Pixel with Depth -- the input to the function : "+str(listWDepth)+"\n")
 
 
-		f.write("Building/structure points : "+str(listPixelWDepth)+"\n")
+#		f.write("Building/structure points : "+str(listPixelWDepth)+"\n")
+		#f.write("Depth at pixel 739 x 825 : "+str(mat_allPixelWDepth[739,825,0])+"\n\n")
+		f.write("Building/structure points : "+str(mat_allPixelWDepth)+"\n")
 		f.write("\n Length of list  : "+str(len(listPixelWDepth)))
 	
 
@@ -306,6 +327,8 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		if skyOrGrassDone == 2:
 				self.skyGrassCheck.setEnabled(False)
 				self.skyGrassCheck.setCheckState(0)
+				selectionOption_2 = ['Buildings - front face', 'Building - side face']
+				self.optionsList.addItems(selectionOption_2)
 		
 		
 
@@ -328,12 +351,13 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 	
 	#Function to test how points are getting selected
 	def toTestPixelSelection(self, pixelWDepth):
+		global mat_allPixelWDepth
 		img = cv.imread('project.jpeg')
-		for i in range(len(pixelWDepth)):
-			img[pixelWDepth[i][0][1]][pixelWDepth[i][0][0]][0] = 0
-			img[pixelWDepth[i][0][1]][pixelWDepth[i][0][0]][1] = 0
-			img[pixelWDepth[i][0][1]][pixelWDepth[i][0][0]][2] = 0
-		
+		for i in range(mat_allPixelWDepth.shape[0]):
+			for j in range(mat_allPixelWDepth.shape[1]):
+				if(mat_allPixelWDepth[i,j,0] != 1):
+					img[j][i] = 0
+
 		cv.imwrite('project_selected_Pixels.jpeg',img)
 
 
