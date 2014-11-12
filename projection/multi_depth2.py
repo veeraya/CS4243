@@ -7,8 +7,9 @@ import matplotlib as mpl
 import cv2
 import math
 import sys
-import pickle
-
+"""
+Testing multi depth code against three red and blue rectangles
+"""
 # GLOBAL Camera intrinsic params
 u0 = 0
 v0 = 0
@@ -16,29 +17,38 @@ Bu = 1
 Bv = 1
 ku = 1
 kv = 1
-f = 500
+f = 1500
 
-img = cv2.imread("project.jpeg")
 def main():
     """
     Test projection and drawing projection into images
     """
     # initializing points
+    img = cv2.imread("easy.png")
     """
     pts NxNx3
     pts[x,y,0] = z
     pts[x,y,1] = color
     pts[x,y,2] = (x, y) of projected points
     """
-    pkl_file = open('data.pkl', 'rU')
-    pts1 = pickle.load(pkl_file)
-    print "pts1[718,814,0]",pts1[718,814]
-    degree = 60
-    cam_original_position = get_cam_position(angle=math.radians(degree), no_frames = 1, cam_original_position=[0,0,610,-5 * 100])[1]
-    cam_original_orientation = get_cam_orientation(angle=math.radians(-degree), no_frames = 1)[1]#np.matrix([[0.5,0.,-0.8660254],[0.,1.,0.],[0.8660254,0.,0.5]])
+    pts1 = np.ones((img.shape[1], img.shape[0], 3), dtype=object)
+    #pts1[:,:,1] = (255,255,255)
+    for x in range(16,310):
+        for y in range(13, 239):
+            pts1[x,y,0] = [2, 5]
+            pts1[x,y,1] = (53,95,255)
+
+    for x in range(309,484):
+        for y in range(161, 239):
+            pts1[x,y,0] = [3]
+            pts1[x,y,1] = (255,80,0)
+
+    cam_original_position = [0.0, -383.0127018922193, 100.0, -336.60254037844396] #[0.0, -816.0254037844386, 100.0, -586.602540378444]
+    cam_original_orientation = np.matrix([[0.5,0.,-0.8660254],[0.,1.,0.],[0.8660254,0.,0.5]])
     cam_position = get_cam_position(angle=math.radians(-12), no_frames=10, cam_original_position=cam_original_position)
     cam_orientation = get_cam_orientation(angle=math.radians(12), no_frames=10, cam_original_orientation = cam_original_orientation)
-
+    #all_pts = project_points(pts1, cam_position, cam_orientation, 0, 3)
+    #draw_image(all_pts)
     project_and_draw(pts1, cam_position, cam_orientation, 0, 10)
 
 def draw_image(pts, filename = "frame.png"):
@@ -65,15 +75,10 @@ def draw_image(pts, filename = "frame.png"):
                 for i,z in enumerate(pts[x,y,0]):
                     x_proj = pts[x,y,2][i][0]
                     y_proj = pts[x,y,2][i][1]
-                    #print "x",x_proj
-                    #print "y",y_proj
-                    x_proj += 2000
-                    y_proj += 700
-                    if pts[x,y,1] != 1:
-                        print x_proj
-                        print y_proj
+                    x_proj += 1000
+                    y_proj += 1200
                     if (0 <= x_proj < row and 0 <= y_proj<column and z < min_depth_arr[y_proj,x_proj]):
-                        projection_matrix[y_proj,x_proj]= img[y,x]#pts[x,y,1] if type(pts[x,y,1]) == tuple else [255,255,255]
+                        projection_matrix[y_proj,x_proj]= pts[x,y,1] if type(pts[x,y,1]) == tuple else [255,255,255]
                         min_depth_arr[y_proj,x_proj] = z
     cv2.imwrite(filename ,projection_matrix)
 
@@ -104,8 +109,8 @@ def project_and_draw(pts, cam_position, cam_orientation, start_frame, end_frame)
             for y in range(0, pts.shape[1]):
                 if type(pts[x,y,0]) == tuple or type(pts[x,y,0]) == list:
                     for z in pts[x,y,0]:
-                        # - 816 because we want to shift our image such that the midpoint has x value of 0
-                        sp = np.matrix([[x-816],[y],[z]])
+                        sp = np.matrix([[x-100],[y],[z]])
+                        #sp = np.matrix(pts1[i, :]).reshape(3,1)
                         u_fp = ((f * np.transpose((sp - tf)) * i_f * Bu) / (np.transpose((sp - tf)) * k_f)) + u0
                         v_fp = ((f * np.transpose((sp - tf)) * j_f * Bv) / (np.transpose((sp - tf)) * k_f)) + v0
                         x_projected = u_fp[0,0]
@@ -114,10 +119,10 @@ def project_and_draw(pts, cam_position, cam_orientation, start_frame, end_frame)
                             new_pts[x,y,2].append((x_projected, y_projected))
                         else:
                             new_pts[x,y,2] = [(x_projected, y_projected)]
-        draw_image(new_pts, "frame_%d.png" % frame)
-        print "Save frame_%d.png" % frame
+        draw_image(new_pts, "frame_2%d.png" % frame)
+        print "Save frame_2%d.png" % frame
 
-def get_cam_position(angle = -np.pi/6, no_frames = 4, cam_original_position = [0,0,100,-5 * 100]):
+def get_cam_position(angle = -np.pi/6, no_frames = 4, cam_original_position = [0,250,125,-5 * 100]):
     """ Return camera position for frame 2-4 using quaternion maths """
     cam_position = []
     cam_position.append(cam_original_position)
