@@ -34,10 +34,12 @@ def main():
     pts1 = pickle.load(pkl_file)
     print "pts1[718,814,0]",pts1[718,814]
     degree = 60
+    no_frames = 10
+    scale = 0.5
     cam_original_position = get_cam_position(angle=math.radians(degree), no_frames = 1, cam_original_position=[0,0,610,-5 * 100], k=2)[1]
-    cam_original_orientation = get_cam_orientation(angle=math.radians(-degree), no_frames = 1)[1]#np.matrix([[0.5,0.,-0.8660254],[0.,1.,0.],[0.8660254,0.,0.5]])
-    cam_position = get_cam_position(angle=math.radians(-12), no_frames=10, cam_original_position=cam_original_position, k=2)
-    cam_orientation = get_cam_orientation(angle=math.radians(12), no_frames=10, cam_original_orientation = cam_original_orientation)
+    cam_original_orientation = get_cam_orientation(angle=math.radians(-degree * scale), no_frames = 1)[1]#np.matrix([[0.5,0.,-0.8660254],[0.,1.,0.],[0.8660254,0.,0.5]])
+    cam_position = get_cam_position(angle=math.radians(-degree * 2.0 / no_frames), no_frames=10, cam_original_position=cam_original_position, k=2)
+    cam_orientation = get_cam_orientation(angle=math.radians(degree * 2.0 * scale / no_frames), no_frames=10, cam_original_orientation = cam_original_orientation)
 
     project_and_draw(pts1, cam_position, cam_orientation, 0, 10)
 
@@ -105,7 +107,7 @@ def project_and_draw(pts, cam_position, cam_orientation, start_frame, end_frame)
                 if type(pts[x,y,0]) == tuple or type(pts[x,y,0]) == list:
                     for z in pts[x,y,0]:
                         # - 816 because we want to shift our image such that the midpoint has x value of 0
-                        sp = np.matrix([[x-790],[y],[z]])
+                        sp = np.matrix([[x-816],[y],[z]])
                         u_fp = ((f * np.transpose((sp - tf)) * i_f * Bu) / (np.transpose((sp - tf)) * k_f)) + u0
                         v_fp = ((f * np.transpose((sp - tf)) * j_f * Bv) / (np.transpose((sp - tf)) * k_f)) + v0
                         x_projected = u_fp[0,0]
