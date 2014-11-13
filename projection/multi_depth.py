@@ -1,7 +1,7 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-from projection_lib import quat2rot
+from projection_lib import quat2rot, dilate
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 import matplotlib as mpl
 import cv2
@@ -42,9 +42,10 @@ def main():
     cam_position = get_cam_position(angle=math.radians(-degree * 2.0 / no_frames), no_frames=10, cam_original_position=cam_original_position, k=2)
     cam_orientation = get_cam_orientation(angle=math.radians(degree * 2.0 * scale / no_frames), no_frames=10, cam_original_orientation = cam_original_orientation)
 
-    project_and_draw(pts1, cam_position, cam_orientation, 0, 10, multithread=False)
+    """ FOR FASTEST PROJECTION, SET multithread and fill_blank to False """
+    project_and_draw(pts1, cam_position, cam_orientation, 0, 10, multithread=True, fill_blank = True)
 
-def draw_image(pts, filename = "frame.png", use_cloud = False):
+def draw_image(pts, filename = "frame.png", use_cloud = False, fill_blank=False):
     """
     Draw a single image from list of points
     :param pts: list of points of an image
@@ -81,10 +82,16 @@ def draw_image(pts, filename = "frame.png", use_cloud = False):
                     if (0 <= x_proj < column and 0 <= y_proj< row and z < min_depth_arr[y_proj,x_proj]):
                         projection_matrix[y_proj,x_proj]= img[y,x]#pts[x,y,1] if type(pts[x,y,1]) == tuple else [255,255,255]
                         min_depth_arr[y_proj,x_proj] = z
+    if fill_blank:
+        print "Dilation #1"
+        projection_matrix = dilate(projection_matrix)
+        # print "Dilation #2"
+        # projection_matrix = dilate(projection_matrix)
+
     cv2.imwrite(filename ,projection_matrix)
 
 
-def project_and_draw(pts, cam_position, cam_orientation, start_frame, end_frame, multithread = False):
+def project_and_draw(pts, cam_position, cam_orientation, start_frame, end_frame, multithread = False, fill_blank = False):
     """
     :param pts: list of points
     :param cam_position: camera position
@@ -100,12 +107,12 @@ def project_and_draw(pts, cam_position, cam_orientation, start_frame, end_frame,
     """
     for frame in range(start_frame, end_frame+1):
         if multithread:
-            p = Process(target=project_and_draw_single_frame, args=(pts, cam_position, cam_orientation, frame))
+            p = Process(target=project_and_draw_single_frame, args=(pts, cam_position, cam_orientation, frame, fill_blank))
             p.start()
         else:
-            project_and_draw_single_frame(pts, cam_position, cam_orientation, frame)
+            project_and_draw_single_frame(pts, cam_position, cam_orientation, frame, fill_blank)
 
-def project_and_draw_single_frame(pts, cam_position, cam_orientation, frame):
+def project_and_draw_single_frame(pts, cam_position, cam_orientation, frame, fill_blank=False):
     """
     Project and draw single frame. This used to be part of the function project_and_draw but its has been
     made into a separate function to enable multi-threading.
@@ -132,7 +139,7 @@ def project_and_draw_single_frame(pts, cam_position, cam_orientation, frame):
                         new_pts[x,y,2].append((x_projected, y_projected))
                     else:
                         new_pts[x,y,2] = [(x_projected, y_projected)]
-    draw_image(new_pts, "frame_%d.png" % frame)
+    draw_image(new_pts, "frame_%d.png" % frame, use_cloud=False,fill_blank=fill_blank)
     print "Save frame_%d.png" % frame
 
 def get_cam_position(angle = -np.pi/6, no_frames = 12, cam_original_position = [0,0,100,-5 * 100], k = 2):

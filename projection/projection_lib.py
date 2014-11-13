@@ -5,22 +5,23 @@ import matplotlib.pyplot as plt
 def dilate(img):
     num_row = img.shape[0]
     num_col = img.shape[1]
-
+    color = np.array([255,255,255])
     for y in range(num_row-2, -1, -1):
         for x in range(num_col-2, -1, -1):
-            if np.array_equal(img[y,x], [255,255,255]):
-                if not np.array_equal(img[y,x-1], [255,255,255]):
+            if all(img[y,x]==color):
+                if not all(img[y,x-1] ==color):
                     img[y,x] = img[y,x-1]
-                elif not np.array_equal(img[y,x-2], [255,255,255]):
+                elif not all(img[y,x-2] == color):
                     img[y,x] = img[y,x-2]
-                elif not np.array_equal(img[y,x-3], [255,255,255]):
+                elif not all(img[y,x-3] == color):
                     img[y,x] = img[y,x-3]
-                elif not np.array_equal(img[y-1,x], [255,255,255]):
+                elif not all(img[y-1,x] == color):
                     img[y,x] = img[y-1,x]
-                elif not np.array_equal(img[y-2,x], [255,255,255]):
+                elif not all(img[y-2,x] == color):
                     img[y,x] = img[y-2,x]
-                elif not np.array_equal(img[y-3,x], [255,255,255]):
+                elif not all(img[y-3,x] == color):
                    img[y,x] = img[y-3,x]
+    return img
 
 
 def quatmult(p, q):
