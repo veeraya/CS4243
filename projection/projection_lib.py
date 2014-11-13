@@ -2,44 +2,25 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 
-def pts_set_2():
+def dilate(img):
+    num_row = img.shape[0]
+    num_col = img.shape[1]
 
-  def create_intermediate_points(pt1, pt2, granularity):
-    new_pts = []
-    vector = np.array([(x[0] - x[1]) for x in zip(pt1, pt2)])
-    return [(np.array(pt2) + (vector * (float(i)/granularity))) for i in range(1, granularity)]
-
-  pts = []
-  granularity = 20
-
-  # Create cube wireframe
-  pts.extend([[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], \
-              [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]])
-
-  pts.extend(create_intermediate_points([-1, -1, 1], [1, -1, 1], granularity))
-  pts.extend(create_intermediate_points([1, -1, 1], [1, 1, 1], granularity))
-  pts.extend(create_intermediate_points([1, 1, 1], [-1, 1, 1], granularity))
-  pts.extend(create_intermediate_points([-1, 1, 1], [-1, -1, 1], granularity))
-
-  pts.extend(create_intermediate_points([-1, -1, -1], [1, -1, -1], granularity))
-  pts.extend(create_intermediate_points([1, -1, -1], [1, 1, -1], granularity))
-  pts.extend(create_intermediate_points([1, 1, -1], [-1, 1, -1], granularity))
-  pts.extend(create_intermediate_points([-1, 1, -1], [-1, -1, -1], granularity))
-
-  pts.extend(create_intermediate_points([1, 1, 1], [1, 1, -1], granularity))
-  pts.extend(create_intermediate_points([1, -1, 1], [1, -1, -1], granularity))
-  pts.extend(create_intermediate_points([-1, -1, 1], [-1, -1, -1], granularity))
-  pts.extend(create_intermediate_points([-1, 1, 1], [-1, 1, -1], granularity))
-
-  # Create triangle wireframe
-  pts.extend([[-0.5, -0.5, -1], [0.5, -0.5, -1], [0, 0.5, -1]])
-  pts.extend(create_intermediate_points([-0.5, -0.5, -1], [0.5, -0.5, -1], granularity))
-  pts.extend(create_intermediate_points([0.5, -0.5, -1], [0, 0.5, -1], granularity))
-  pts.extend(create_intermediate_points([0, 0.5, -1], [-0.5, -0.5, -1], granularity))
-
-  return np.array(pts)
-
-pts = pts_set_2()
+    for y in range(num_row-2, -1, -1):
+        for x in range(num_col-2, -1, -1):
+            if np.array_equal(img[y,x], [255,255,255]):
+                if not np.array_equal(img[y,x-1], [255,255,255]):
+                    img[y,x] = img[y,x-1]
+                elif not np.array_equal(img[y,x-2], [255,255,255]):
+                    img[y,x] = img[y,x-2]
+                elif not np.array_equal(img[y,x-3], [255,255,255]):
+                    img[y,x] = img[y,x-3]
+                elif not np.array_equal(img[y-1,x], [255,255,255]):
+                    img[y,x] = img[y-1,x]
+                elif not np.array_equal(img[y-2,x], [255,255,255]):
+                    img[y,x] = img[y-2,x]
+                elif not np.array_equal(img[y-3,x], [255,255,255]):
+                   img[y,x] = img[y-3,x]
 
 
 def quatmult(p, q):
