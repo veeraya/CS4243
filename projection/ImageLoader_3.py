@@ -51,6 +51,7 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		self.reset_btn.clicked.connect(self.resetAllMembers)
 		self.reset_btn.setToolTip('To reset all members of this form')
 		self.optionsList.addItems(selectionOption)
+		self.skyGrassCheck.setVisible(False)
 
 
 	#Function to load image into Pixmap.
@@ -237,12 +238,9 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		elif(len(listSkyGrassWithDepth) == 0):
 			self.getBuildingPixelsWDepth(listBuildingPointsWithDepth)
 		
-		#matFile = TemporaryFile()
-		#np.save(matFile,mat_allPixelWDepth)
 		output = open('data.pkl', 'wb')
 		pickle.dump(mat_allPixelWDepth, output)
 		output.close()
-		#np.savetxt("Image.bin",mat_allPixelWDepth)
 		f = open("PixelandDepth.txt","w")
 		f.write("Building/structure points : "+str(listBuildingPointsWithDepth)+"\n")
 		f.write("Sky or Front Grass : "+str(listSkyGrassWithDepth)+"\n")
@@ -286,7 +284,7 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 			poly = mpPath.Path(buildingShapeArray,codes=None,closed=True)
 			##OPTIMIZATION: No need to make a seperate list of points. We can directly assign depths to the matrix
 
-			if(listWDepth[i][0] > 0):	
+			if(len(str(listWDepth[i][0])) < 3):	
 				depth_int = depth
 				depth = (depth_int,)
 # str(listWDepth[i][0]) != "Sky" and str(listWDepth[i][0]) != "Grass"):			
@@ -299,16 +297,18 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 						if isPointInside:
 							listPixelWDepth.append([point,depth])
 							mat_allPixelWDepth[p,q,0] = depth 
-			elif(str(listWDepth[i][0]) == 'Building - no side face'):
+			elif(str(listWDepth[i][0]) == "Building - no side face"):
 				print "Setting pixels for face that is not visible\n"
 				depth_int = depth
 				depth = (depth_int,)
 				for q in range(min_y,max_y):
 					point = (min_x,q)
 					for i in range(1,100):
-						depth.append(depth_int+i)	#making the tuple that holds multiple depths
+						depth = depth + ((depth_int+i),)	#making the tuple that holds multiple depths
 					listPixelWDepth.append([point,depth])
 					mat_allPixelWDepth[min_x,q,0] = depth 
+					depth = ()
+					print "mat_allPixelWDepth[min_x,q,0] : ",mat_allPixelWDepth[min_x,q,0]
 			
 			#elif(str(listWDepth[i][0]) == 'Building - partial side face'):
 			#	print "Setting pixels for face that is partially visible\n"
