@@ -194,7 +194,10 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 			listBuildingPointsWithDepth.append(temp)
 
 		elif(selectedOption == 'Building - partial side face'):
-			temp = [str(selectedOption),setsOfPoints,enteredDepth]
+			length, ok = QtGui.QInputDialog.getInt(self, "Length of the side wall",
+		        "Enter length of the side wall", QtGui.QLineEdit.Normal, 1, 1073741824)
+						
+			temp = [str(selectedOption),setsOfPoints,enteredDepth,length]
 			QtGui.QMessageBox.critical(self, "Warning", "This depth will be used to assign depth to all the pixels that will be visible as the camera moves")
 			listBuildingPointsWithDepth.append(temp)
 
@@ -310,24 +313,41 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 					depth = ()
 					print "mat_allPixelWDepth[min_x,q,0] : ",mat_allPixelWDepth[min_x,q,0]
 			
-			#elif(str(listWDepth[i][0]) == 'Building - partial side face'):
-			#	print "Setting pixels for face that is partially visible\n"
-			#	depth_int = depth
-			#	depth = (depth_int,)
-			#	for q in range(min_y,max_y):
-			#		point = (min_x,q)
-			#		for i in range(1,100):
-			#			depth.append(depth_int+i)	#making the tuple that holds multiple depths
-			#		listPixelWDepth.append([point,depth])
+			elif(str(listWDepth[i][0]) == "Building - partial side face"):
+				length = listWDepth[i][3]
+				print "Setting pixels for face that is partially visible\n"
+				depth_int = depth
+#				depth = (depth_int,)
+				depth = ()
+				alpha = int(round(length/(max_x - min_x)))
+
+				for p in range(max_x,min_x,-1):
+					for q in range(min_y,max_y,1):
+						point = (p,q)
+						isPointInside = bool(poly.contains_point(point,transform=None,radius=0.0))
+						
+						if isPointInside:
+							#m = max_x - p
+							for j in range(alpha+1):
+								depth = depth + (depth_int+j,)
+							depth_int = alpha
+							#depth = (depth_int+2*m-1, depth_int+2*m)
+							listPixelWDepth.append([point,depth])
+							mat_allPixelWDepth[p,q,0] = depth
+							#print "\nDepth applied to point ",p," -- ",q," is ",mat_allPixelWDepth[p,q,0]
+							depth = ()
 			
 			elif(str(listWDepth[i][0]) == 'Sky' or str(listWDepth[i][0]) == 'Grass'):
 				print "Setting pixels for Sky or Grass\n"
+				depth_int = depth
+				depth = (depth_int,)
 				for p in range(min_y,max_y,1):
 					for q in range(min_x,max_x,1):
 						point = (q,p)
 						isPointInside = bool(poly.contains_point(point,transform=None,radius=0.0))
 						if isPointInside:
-							listPixelWDepth.append([point,(depth+(max_y-p))])
+							depth = (depth_int + max_y-p,)
+							listPixelWDepth.append([point,depth])
 							mat_allPixelWDepth[p,q,0] = depth
 
 		
