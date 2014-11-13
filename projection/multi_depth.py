@@ -34,9 +34,9 @@ def main():
     pts1 = pickle.load(pkl_file)
     print "pts1[718,814,0]",pts1[718,814]
     degree = 60
-    cam_original_position = get_cam_position(angle=math.radians(degree), no_frames = 1, cam_original_position=[0,0,610,-5 * 100])[1]
+    cam_original_position = get_cam_position(angle=math.radians(degree), no_frames = 1, cam_original_position=[0,0,610,-5 * 100], k=2)[1]
     cam_original_orientation = get_cam_orientation(angle=math.radians(-degree), no_frames = 1)[1]#np.matrix([[0.5,0.,-0.8660254],[0.,1.,0.],[0.8660254,0.,0.5]])
-    cam_position = get_cam_position(angle=math.radians(-12), no_frames=10, cam_original_position=cam_original_position)
+    cam_position = get_cam_position(angle=math.radians(-12), no_frames=10, cam_original_position=cam_original_position, k=2)
     cam_orientation = get_cam_orientation(angle=math.radians(12), no_frames=10, cam_original_orientation = cam_original_orientation)
 
     project_and_draw(pts1, cam_position, cam_orientation, 0, 10)
@@ -53,8 +53,8 @@ def draw_image(pts, filename = "frame.png"):
     pts[x,y,1] = color
     pts[x,y,2] = (x, y) of projected points
     """
-    row = 3000
-    column = 3000
+    row = 2000
+    column = 2000
     projection_matrix=np.ones((row,column,3))
     projection_matrix[:,:] = [255,255,255]
     min_depth_arr = np.ones((row, column))
@@ -67,12 +67,12 @@ def draw_image(pts, filename = "frame.png"):
                     y_proj = pts[x,y,2][i][1]
                     #print "x",x_proj
                     #print "y",y_proj
-                    x_proj += 2000
-                    y_proj += 700
+                    x_proj += 1000
+                    y_proj += 500
                     if pts[x,y,1] != 1:
                         print x_proj
                         print y_proj
-                    if (0 <= x_proj < row and 0 <= y_proj<column and z < min_depth_arr[y_proj,x_proj]):
+                    if (0 <= x_proj < column and 0 <= y_proj< row and z < min_depth_arr[y_proj,x_proj]):
                         projection_matrix[y_proj,x_proj]= img[y,x]#pts[x,y,1] if type(pts[x,y,1]) == tuple else [255,255,255]
                         min_depth_arr[y_proj,x_proj] = z
     cv2.imwrite(filename ,projection_matrix)
@@ -117,18 +117,22 @@ def project_and_draw(pts, cam_position, cam_orientation, start_frame, end_frame)
         draw_image(new_pts, "frame_%d.png" % frame)
         print "Save frame_%d.png" % frame
 
-def get_cam_position(angle = -np.pi/6, no_frames = 4, cam_original_position = [0,0,100,-5 * 100]):
-    """ Return camera position for frame 2-4 using quaternion maths """
-    cam_position = []
-    cam_position.append(cam_original_position)
-    q = [math.cos(angle/2), 0, math.sin(angle/2), 0]
-    q_conj = conjugate(q)
-    # print "Quaternion rotation:", q
-    # print "Q prime:", q_conj
+
+def get_cam_position(angle = -np.pi/6, no_frames = 12, cam_original_position = [0,0,100,-5 * 100], k = 2):
+    """
+    Return camera position for each frame using rotation matrix
+    **Change k value to make the ellipse flatter. The bigger the value, the more flat it becomes. when k = 1, it becomes a circle
+    """
+    r = np.matrix([[math.cos(angle), k * math.sin(angle)],[math.sin(angle) * 1/(-k), math.cos(angle)]])
+    y = cam_original_position[2]
+    cam_position_2d = [[[cam_original_position[1]],[cam_original_position[3]]]] # [x,z]
+    cam_position_3d = [cam_original_position]
     for i in range(0, no_frames):
-        new_cam = quatmult(quatmult(q,cam_position[-1]), q_conj)
-        cam_position.append(new_cam)
-    return cam_position
+        p = cam_position_2d[i]
+        new_cam = r * p
+        cam_position_2d.append(new_cam)
+        cam_position_3d.append([0, new_cam[0,0], y, new_cam[1,0]])
+    return cam_position_3d
 
 def get_cam_orientation(angle = np.pi/6, no_frames = 4, cam_original_orientation = np.matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]])):
     """ Return camera orientation """
@@ -141,8 +145,21 @@ def get_cam_orientation(angle = np.pi/6, no_frames = 4, cam_original_orientation
         cam_orientation.append(new_quatmat)
     return cam_orientation
 
+def test_cam_post():
+    degree = 60
+    cam_original_position = get_cam_position(angle=math.radians(degree), no_frames = 1, cam_original_position=[0,0,610,-5 * 100])[1]
+    cam_position = get_cam_position(angle=math.radians(-12), no_frames=10, cam_original_position=cam_original_position)
+    print cam_position
+    #print get_cam_position(angle = math.radians(-12), no_frames=12, cam_original_position=[0,0,100,-500])
+
+def test_cam_orient():
+    print get_cam_orientation()
+
+
 if __name__ == "__main__":
     main()
+    #test_cam_post()
+    #test_cam_orient()
     #degree = 60
     #print get_cam_orientation(angle=math.radians(-degree), no_frames = 1)
     #print get_cam_position(angle=math.radians(degree), no_frames = 1)
