@@ -348,7 +348,7 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 						if isPointInside:
 							depth = (depth_int + max_y-p,)
 							listPixelWDepth.append([point,depth])
-							mat_allPixelWDepth[p,q,0] = depth
+							mat_allPixelWDepth[q,p,0] = depth
 
 		
 		
