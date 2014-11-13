@@ -1,7 +1,7 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-from projection_lib import pts_set_2, quatmult, conjugate, quat2rot
+from projection_lib import quat2rot
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 import matplotlib as mpl
 import cv2
@@ -105,7 +105,7 @@ def project_and_draw(pts, cam_position, cam_orientation, start_frame, end_frame)
                 if type(pts[x,y,0]) == tuple or type(pts[x,y,0]) == list:
                     for z in pts[x,y,0]:
                         # - 816 because we want to shift our image such that the midpoint has x value of 0
-                        sp = np.matrix([[x-816],[y],[z]])
+                        sp = np.matrix([[x-790],[y],[z]])
                         u_fp = ((f * np.transpose((sp - tf)) * i_f * Bu) / (np.transpose((sp - tf)) * k_f)) + u0
                         v_fp = ((f * np.transpose((sp - tf)) * j_f * Bv) / (np.transpose((sp - tf)) * k_f)) + v0
                         x_projected = u_fp[0,0]
