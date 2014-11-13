@@ -43,7 +43,7 @@ def main():
 
     project_and_draw(pts1, cam_position, cam_orientation, 0, 10)
 
-def draw_image(pts, filename = "frame.png"):
+def draw_image(pts, filename = "frame.png", use_cloud = False):
     """
     Draw a single image from list of points
     :param pts: list of points of an image
@@ -55,10 +55,13 @@ def draw_image(pts, filename = "frame.png"):
     pts[x,y,1] = color
     pts[x,y,2] = (x, y) of projected points
     """
-    row = 2000
+    row = 1500
     column = 2000
-    projection_matrix=np.ones((row,column,3))
-    projection_matrix[:,:] = [255,255,255]
+    if use_cloud:
+        projection_matrix = cv2.imread("cloud.jpg")
+    else:
+        projection_matrix=np.ones((row,column,3))
+        projection_matrix[:,:] = [255,255,255]
     min_depth_arr = np.ones((row, column))
     min_depth_arr[:,:] = sys.maxint
     for x in range(0, pts.shape[0]):
