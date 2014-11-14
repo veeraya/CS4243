@@ -36,14 +36,14 @@ def main():
     print "pts1[718,814,0]",pts1[718,814]
     degree = 60
     no_frames = 10
-    scale = 0.5
-    cam_original_position = get_cam_position(angle=math.radians(degree), no_frames = 1, cam_original_position=[0,0,610,-5 * 100], k=2)[1]
+    scale = 1
+    cam_original_position = get_cam_position(angle=math.radians(degree), no_frames = 1, cam_original_position=[0,0,610,-8 * 100], k=2)[1]
     cam_original_orientation = get_cam_orientation(angle=math.radians(-degree * scale), no_frames = 1)[1]#np.matrix([[0.5,0.,-0.8660254],[0.,1.,0.],[0.8660254,0.,0.5]])
     cam_position = get_cam_position(angle=math.radians(-degree * 2.0 / no_frames), no_frames=10, cam_original_position=cam_original_position, k=2)
     cam_orientation = get_cam_orientation(angle=math.radians(degree * 2.0 * scale / no_frames), no_frames=10, cam_original_orientation = cam_original_orientation)
 
     """ FOR FASTEST PROJECTION, SET multithread and fill_blank to False """
-    project_and_draw(pts1, cam_position, cam_orientation, 0, 10, multithread=True, fill_blank = True)
+    project_and_draw(pts1, cam_position, cam_orientation, 0, 10, multithread=False, fill_blank = False)
 
 def draw_image(pts, filename = "frame.png", use_cloud = False, fill_blank=False):
     """
@@ -57,8 +57,8 @@ def draw_image(pts, filename = "frame.png", use_cloud = False, fill_blank=False)
     pts[x,y,1] = color
     pts[x,y,2] = (x, y) of projected points
     """
-    row = 1500
-    column = 2000
+    row = 1100
+    column = 1700
     if use_cloud:
         projection_matrix = cv2.imread("cloud.jpg")
     else:
@@ -74,7 +74,7 @@ def draw_image(pts, filename = "frame.png", use_cloud = False, fill_blank=False)
                     y_proj = pts[x,y,2][i][1]
                     #print "x",x_proj
                     #print "y",y_proj
-                    x_proj += 1000
+                    x_proj += 900
                     y_proj += 500
                     if pts[x,y,1] != 1:
                         print x_proj
