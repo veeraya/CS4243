@@ -29,7 +29,7 @@ mat_allPixelWDepth = np.ones((img.shape[1],img.shape[0],3),dtype = object)
 
 					#Matrix to store depth for corresponding pixel
 
-selectionOption = ["Buildings - front face", "Building - no side face","Building - no side face (Slant)", "Building - partial side face", "Grass","Sky"]
+selectionOption = ["Buildings - front face", "Building - no side face","Building - no side face (Slant)", "Building - partial side face  RtoL","Building - partial side face  LtoR",  "Grass","Sky"]
 
 class ImageLoad(QtGui.QMainWindow, form_class):
 	def __init__(self, parent=None):
@@ -200,13 +200,23 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 			temp = [str(selectedOption),setsOfPoints,enteredDepth,length]
 			QtGui.QMessageBox.critical(self, "Warning", "This depth will be used to assign depth to all the pixels of the hidden Slant wall")
 			listBuildingPointsWithDepth.append(temp)
-		elif(selectedOption == 'Building - partial side face'):
+		elif(selectedOption == "Building - partial side face  RtoL"):
 			length, ok = QtGui.QInputDialog.getInt(self, "Length of the side wall",
 		        "Enter length of the side wall", QtGui.QLineEdit.Normal, 1, 1073741824)
 						
 			temp = [str(selectedOption),setsOfPoints,enteredDepth,length]
 			QtGui.QMessageBox.critical(self, "Warning", "This depth will be used to assign depth to all the pixels that will be visible as the camera moves")
 			listBuildingPointsWithDepth.append(temp)
+
+#"Building - partial side face  LtoR"
+		elif(selectedOption == "Building - partial side face  LtoR"):
+			length, ok = QtGui.QInputDialog.getInt(self, "Length of the side wall",
+		        "Enter length of the side wall", QtGui.QLineEdit.Normal, 1, 1073741824)
+						
+			temp = [str(selectedOption),setsOfPoints,enteredDepth,length]
+			QtGui.QMessageBox.critical(self, "Warning", "This depth will be used to assign depth to all the pixels that will be visible as the camera moves")
+			listBuildingPointsWithDepth.append(temp)
+
 
 		elif(selectedOption != 'Sky' or selectedOption != 'Grass'):
 			skyOrGrassDone+=1
@@ -346,7 +356,7 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 							depth = ()
 						#print "mat_allPixelWDepth[min_x,q,0] : ",mat_allPixelWDepth[min_x,q,0]
 			
-			elif(str(listWDepth[i][0]) == "Building - partial side face"):
+			elif(str(listWDepth[i][0]) == "Building - partial side face  RtoL"):
 				length = listWDepth[i][3]
 				print "Setting pixels for face that is partially visible\n"
 				depth_int = depth
@@ -363,13 +373,37 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 							#m = max_x - p
 							for j in range(alpha+1):
 								depth = depth + (depth_int+j,)
-							depth_int = alpha
+							depth_int = alpha + depth_int
 							#depth = (depth_int+2*m-1, depth_int+2*m)
 							listPixelWDepth.append([point,depth])
 							mat_allPixelWDepth[p,q,0] = depth
 							#print "\nDepth applied to point ",p," -- ",q," is ",mat_allPixelWDepth[p,q,0]
 							depth = ()
-			
+			#"Building - partial side face  LtoR"
+			elif(str(listWDepth[i][0]) == "Building - partial side face  LtoR"):
+				length = listWDepth[i][3]
+				print "Setting pixels for face that is partially visible\n"
+				depth_int = depth
+#				depth = (depth_int,)
+				depth = ()
+				alpha = int(round(length/(max_x - min_x)))
+
+				for p in range(min_x,max_x,1):
+					for q in range(min_y,max_y,1):
+						point = (p,q)
+						isPointInside = bool(poly.contains_point(point,transform=None,radius=0.0))
+						if isPointInside:
+							#m = max_x - p
+							for j in range(alpha+1):
+								depth = depth + (depth_int+j,)
+							depth_int = alpha + depth_int
+							#depth = (depth_int+2*m-1, depth_int+2*m)
+							listPixelWDepth.append([point,depth])
+							mat_allPixelWDepth[p,q,0] = depth
+							#print "\nDepth applied to point ",p," -- ",q," is ",mat_allPixelWDepth[p,q,0]
+							depth = ()
+
+
 			elif(str(listWDepth[i][0]) == 'Sky' or str(listWDepth[i][0]) == 'Grass'):
 				print "Setting pixels for Sky or Grass\n"
 				depth_int = depth
@@ -432,7 +466,7 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 				self.skyGrassCheck.setCheckState(0)
 				selectionOption_2 = []
 				self.optionsList.addItems(selectionOption_2)
-				selectionOption_2 = ["Buildings - front face", "Building - no side face","Building - no side face (Slant)","Building - partial side face"]
+				selectionOption_2 = ["Buildings - front face", "Building - no side face","Building - no side face (Slant)","Building - partial side face  RtoL", "Building - partial side face  LtoR"]
 				self.optionsList.addItems(selectionOption_2)
 
 		
