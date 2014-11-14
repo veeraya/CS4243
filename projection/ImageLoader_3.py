@@ -29,7 +29,7 @@ mat_allPixelWDepth = np.ones((img.shape[1],img.shape[0],3),dtype = object)
 
 					#Matrix to store depth for corresponding pixel
 
-selectionOption = ["Buildings - front face", "Building - no side face","Building - partial side face", "Grass","Sky"]
+selectionOption = ["Buildings - front face", "Building - no side face","Building - no side face (Slant)", "Building - partial side face", "Grass","Sky"]
 
 class ImageLoad(QtGui.QMainWindow, form_class):
 	def __init__(self, parent=None):
@@ -173,7 +173,7 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		global skyOrGrassDone
 		selectedOption = self.optionsList.currentText()
 		depth, ok = QtGui.QInputDialog.getInt(self, "Depth from camera",
-	        "Enter depth of the selected points", QtGui.QLineEdit.Normal, 1, 1073741824)
+	        "Enter depth of the selected points", QtGui.QLineEdit.Normal, -1073741824, 1073741824)
 
 		enteredDepth = depth;
 
@@ -192,7 +192,10 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 			temp = [str(selectedOption),setsOfPoints,enteredDepth]
 			QtGui.QMessageBox.critical(self, "Warning", "This depth will be used to assign depth to all the pixels of the hidden wall")
 			listBuildingPointsWithDepth.append(temp)
-
+		elif(selectedOption == "Building - no side face (Slant)"):
+			temp = [str(selectedOption),setsOfPoints,enteredDepth]
+			QtGui.QMessageBox.critical(self, "Warning", "This depth will be used to assign depth to all the pixels of the hidden Slant wall")
+			listBuildingPointsWithDepth.append(temp)
 		elif(selectedOption == 'Building - partial side face'):
 			length, ok = QtGui.QInputDialog.getInt(self, "Length of the side wall",
 		        "Enter length of the side wall", QtGui.QLineEdit.Normal, 1, 1073741824)
@@ -244,10 +247,10 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 		output = open('data.pkl', 'wb')
 		pickle.dump(mat_allPixelWDepth, output)
 		output.close()
-		f = open("PixelandDepth.txt","w")
-		f.write("Building/structure points : "+str(listBuildingPointsWithDepth)+"\n")
-		f.write("Sky or Front Grass : "+str(listSkyGrassWithDepth)+"\n")
-		f.close	
+		#f = open("PixelandDepth.txt","w")
+		#f.write("Building/structure points : "+str(listBuildingPointsWithDepth)+"\n")
+		#f.write("Sky or Front Grass : "+str(listSkyGrassWithDepth)+"\n")
+		#f.close	
 
 
 
@@ -270,14 +273,17 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 			min_y = min(list_y)
 			max_x = max(list_x)
 			max_y = max(list_y)
-				
+			#if (str(listWDepth[i][0]) != "Building - no side face (Slant)"):
 			buildingShapeArray = np.zeros((len(listWDepth[i][1])+1,2))
+			#if (str(listWDepth[i][0]) == "Building - no side face (Slant)"):
+			#	buildingShapeArray = np.zeros((len(listWDepth[i][1]),2))
+			
 			for j in range(len(listWDepth[i][1])+1):
 				if (j <= (len(listWDepth[i][1]) - 1)):
 					buildingShapeArray[j][0] = listWDepth[i][1][j][0]
 					buildingShapeArray[j][1] = listWDepth[i][1][j][1]
-
-				elif (j == len(listWDepth[i][1])):
+				
+				elif (j == len(listWDepth[i][1])):# and str(listWDepth[i][0]) != "Building - no side face (Slant)"):
 					buildingShapeArray[j][0] = listWDepth[i][1][0][0]
 					buildingShapeArray[j][1] = listWDepth[i][1][0][1]
 
@@ -312,6 +318,27 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 					mat_allPixelWDepth[min_x,q,0] = depth 
 					depth = ()
 					print "mat_allPixelWDepth[min_x,q,0] : ",mat_allPixelWDepth[min_x,q,0]
+			elif(str(listWDepth[i][0]) == "Building - no side face (Slant)"):
+				print "Setting pixels for SLANTED face that is not visible\n"
+				print "Min_x : ",min_x
+				print "Max_x : ",max_x
+				print "Min_y : ",min_y
+				print "Max_y : ",max_y
+				print "buildingShapeArray: ",buildingShapeArray
+				depth_int = depth
+				depth = (depth_int,)
+				for p in range(min_x,max_x,1):
+					for q in range(min_y,max_y,1):
+						point = (p,q)
+						isPointOnLine = bool(poly.contains_point(point,transform=None,radius=0.0))
+						if(isPointOnLine):
+							print "\nPoint on the line found"
+							for i in range(1,100):
+								depth = depth + (depth_int+i,)	#making the tuple that holds multiple depths
+							listPixelWDepth.append([point,depth])
+							mat_allPixelWDepth[p,q,0] = depth 
+							depth = ()
+						#print "mat_allPixelWDepth[min_x,q,0] : ",mat_allPixelWDepth[min_x,q,0]
 			
 			elif(str(listWDepth[i][0]) == "Building - partial side face"):
 				length = listWDepth[i][3]
@@ -341,36 +368,38 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 				print "Setting pixels for Sky or Grass\n"
 				depth_int = depth
 				depth = (depth_int,)
+				d = 0
 				for p in range(min_y,max_y,1):
 					for q in range(min_x,max_x,1):
 						point = (q,p)
 						isPointInside = bool(poly.contains_point(point,transform=None,radius=0.0))
 						if isPointInside:
-							depth = (depth_int + max_y-p,)
+							depth = (depth_int - d,)			#depth = (depth_int + max_y-p,)
 							listPixelWDepth.append([point,depth])
 							mat_allPixelWDepth[q,p,0] = depth
 
+					d+=1
 		
 		
 		#f1 = open("BuildingShape.txt","w")
 		#f1.write("Building Shape array : "+str(buildingShapeArray)+"\n")
 		
 
-		self.toTestPixelSelection(listPixelWDepth)
+		#self.toTestPixelSelection(listPixelWDepth)
 
-		f = open("AllPixelsWDepth.txt","w")
-		f.write("min_x : "+str(min_x)+"\n")
-		f.write("min_y : "+str(min_y)+"\n")
-		f.write("max_x : "+str(max_x)+"\n")
-		f.write("max_y : "+str(max_y)+"\n")
+		#f = open("AllPixelsWDepth.txt","w")
+		#f.write("min_x : "+str(min_x)+"\n")
+		#f.write("min_y : "+str(min_y)+"\n")
+		#f.write("max_x : "+str(max_x)+"\n")
+		#f.write("max_y : "+str(max_y)+"\n")
 
-		f.write("List Pixel with Depth -- the input to the function : "+str(listWDepth)+"\n")
+		#f.write("List Pixel with Depth -- the input to the function : "+str(listWDepth)+"\n")
 
 
 #		f.write("Building/structure points : "+str(listPixelWDepth)+"\n")
 		#f.write("Depth at pixel 739 x 825 : "+str(mat_allPixelWDepth[739,825,0])+"\n\n")
-		f.write("Building/structure points : "+str(mat_allPixelWDepth)+"\n")
-		f.write("\n Length of list  : "+str(len(listPixelWDepth)))
+		#f.write("Building/structure points : "+str(mat_allPixelWDepth)+"\n")
+		#f.write("\n Length of list  : "+str(len(listPixelWDepth)))
 	
 
 	
@@ -397,7 +426,7 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 				self.skyGrassCheck.setCheckState(0)
 				selectionOption_2 = []
 				self.optionsList.addItems(selectionOption_2)
-				selectionOption_2 = ['Buildings - front face', 'Building - no side face','Building - partial side face']
+				selectionOption_2 = ["Buildings - front face", "Building - no side face","Building - no side face (Slant)","Building - partial side face"]
 				self.optionsList.addItems(selectionOption_2)
 
 		
