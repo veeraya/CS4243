@@ -1,7 +1,7 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-from projection_lib import quat2rot, dilate
+from projection_lib import quat2rot, dilate, dilate_and_sky
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 import matplotlib as mpl
 import cv2
@@ -43,7 +43,7 @@ def main():
     cam_orientation = get_cam_orientation(angle=math.radians(degree * 2.0 * scale / no_frames), no_frames=10, cam_original_orientation = cam_original_orientation)
 
     """ FOR FASTEST PROJECTION, SET multithread and fill_blank to False """
-    project_and_draw(pts1, cam_position, cam_orientation, 0, 10, multithread=False, fill_blank = False)
+    project_and_draw(pts1, cam_position, cam_orientation, 0, 10, multithread=False, fill_blank = True)
 
 def draw_image(pts, filename = "frame.png", use_cloud = False, fill_blank=False):
     """
@@ -84,7 +84,7 @@ def draw_image(pts, filename = "frame.png", use_cloud = False, fill_blank=False)
                         min_depth_arr[y_proj,x_proj] = z
     if fill_blank:
         print "Dilation #1"
-        projection_matrix = dilate(projection_matrix)
+        projection_matrix = dilate_and_sky(projection_matrix)
         # print "Dilation #2"
         # projection_matrix = dilate(projection_matrix)
 

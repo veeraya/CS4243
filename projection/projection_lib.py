@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import cv2
 
 def dilate(img):
     num_row = img.shape[0]
@@ -23,6 +24,32 @@ def dilate(img):
                    img[y,x] = img[y-3,x]
     return img
 
+
+def dilate_and_sky(img):
+    sky = cv2.imread('sky.jpg')
+    num_row = img.shape[0]
+    num_col = img.shape[1]
+    color = np.array([255,255,255])
+    for y in range(num_row-2, -1, -1):
+        for x in range(num_col-2, -1, -1):
+            if all(img[y,x]==color):
+                # dilate
+                if not all(img[y,x-1] ==color):
+                    img[y,x] = img[y,x-1]
+                elif not all(img[y,x-2] == color):
+                    img[y,x] = img[y,x-2]
+                elif not all(img[y,x-3] == color):
+                    img[y,x] = img[y,x-3]
+                elif not all(img[y-1,x] == color):
+                    img[y,x] = img[y-1,x]
+                elif not all(img[y-2,x] == color):
+                    img[y,x] = img[y-2,x]
+                elif not all(img[y-3,x] == color):
+                   img[y,x] = img[y-3,x]
+                # put sky
+                elif 75 <= x < sky.shape[1] and y < 740:
+                    img[y,x] = sky[y,x]
+    return img
 
 def quatmult(p, q):
     # quaternion multiplication
