@@ -189,11 +189,15 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 			listBuildingPointsWithDepth.append(temp)
 			numberOfBuildingSelected += 1
 		elif(selectedOption == 'Building - no side face'):
-			temp = [str(selectedOption),setsOfPoints,enteredDepth]
+			length, ok = QtGui.QInputDialog.getInt(self, "Length of the side wall",
+		        "Enter expected length of the wall currently not visible", QtGui.QLineEdit.Normal, 1, 1073741824)
+			temp = [str(selectedOption),setsOfPoints,enteredDepth,length]
 			QtGui.QMessageBox.critical(self, "Warning", "This depth will be used to assign depth to all the pixels of the hidden wall")
 			listBuildingPointsWithDepth.append(temp)
 		elif(selectedOption == "Building - no side face (Slant)"):
-			temp = [str(selectedOption),setsOfPoints,enteredDepth]
+			length, ok = QtGui.QInputDialog.getInt(self, "Length of the side wall",
+		        "Enter expected length of the wall currently not visible", QtGui.QLineEdit.Normal, 1, 1073741824)
+			temp = [str(selectedOption),setsOfPoints,enteredDepth,length]
 			QtGui.QMessageBox.critical(self, "Warning", "This depth will be used to assign depth to all the pixels of the hidden Slant wall")
 			listBuildingPointsWithDepth.append(temp)
 		elif(selectedOption == 'Building - partial side face'):
@@ -310,9 +314,10 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 				print "Setting pixels for face that is not visible\n"
 				depth_int = depth
 				depth = (depth_int,)
+				length = listWDepth[i][3]
 				for q in range(min_y,max_y):
 					point = (min_x,q)
-					for i in range(1,100):
+					for i in range(1,length):
 						depth = depth + ((depth_int+i),)	#making the tuple that holds multiple depths
 					listPixelWDepth.append([point,depth])
 					mat_allPixelWDepth[min_x,q,0] = depth 
@@ -325,6 +330,7 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 				print "Min_y : ",min_y
 				print "Max_y : ",max_y
 				print "buildingShapeArray: ",buildingShapeArray
+				length = listWDepth[i][3]
 				depth_int = depth
 				depth = (depth_int,)
 				for p in range(min_x,max_x,1):
@@ -333,7 +339,7 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 						isPointOnLine = bool(poly.contains_point(point,transform=None,radius=0.0))
 						if(isPointOnLine):
 							print "\nPoint on the line found"
-							for i in range(1,100):
+							for i in range(1,length):
 								depth = depth + (depth_int+i,)	#making the tuple that holds multiple depths
 							listPixelWDepth.append([point,depth])
 							mat_allPixelWDepth[p,q,0] = depth 
@@ -374,7 +380,7 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 						point = (q,p)
 						isPointInside = bool(poly.contains_point(point,transform=None,radius=0.0))
 						if isPointInside:
-							depth = (depth_int - d,)			#depth = (depth_int + max_y-p,)
+							depth = (depth_int - d,depth_int - d+1)			#depth = (depth_int + max_y-p,)
 							listPixelWDepth.append([point,depth])
 							mat_allPixelWDepth[q,p,0] = depth
 
