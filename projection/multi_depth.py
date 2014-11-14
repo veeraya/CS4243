@@ -43,7 +43,7 @@ def main():
     cam_orientation = get_cam_orientation(angle=math.radians(degree * 2.0 * scale / no_frames), no_frames=no_frames, cam_original_orientation = cam_original_orientation)
 
     """ FOR FASTEST PROJECTION, SET multithread and fill_blank to False """
-    project_and_draw(pts1, cam_position, cam_orientation, 0, 10, multithread=True, fill_blank = True)
+    project_and_draw(pts1, cam_position, cam_orientation, 0, no_frames-1, multithread=True, fill_blank = True)
 
 def draw_image(pts, filename = "frame.png", use_cloud = False, fill_blank=False):
     """
