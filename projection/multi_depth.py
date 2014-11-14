@@ -8,7 +8,7 @@ import cv2
 import math
 import sys
 import pickle
-from multiprocessing import Process
+from multiprocessing import Process, Pool
 
 # GLOBAL Camera intrinsic params
 u0 = 0
@@ -31,19 +31,19 @@ def main():
     pts[x,y,1] = color
     pts[x,y,2] = (x, y) of projected points
     """
-    pkl_file = open('data/data.pkl', 'rU')
+    pkl_file = open('data.pkl', 'rU')
     pts1 = pickle.load(pkl_file)
     print "pts1[718,814,0]",pts1[718,814]
     degree = 50
-    no_frames = 300
+    no_frames = 10
     scale = 1
     cam_original_position = get_cam_position(angle=math.radians(degree), no_frames = 1, cam_original_position=[0,0,610,-8 * 100], k=2)[1]
     cam_original_orientation = get_cam_orientation(angle=math.radians(-degree * scale), no_frames = 1)[1]#np.matrix([[0.5,0.,-0.8660254],[0.,1.,0.],[0.8660254,0.,0.5]])
-    cam_position = get_cam_position(angle=math.radians(-degree * 2.0 / no_frames), no_frames=10, cam_original_position=cam_original_position, k=2)
-    cam_orientation = get_cam_orientation(angle=math.radians(degree * 2.0 * scale / no_frames), no_frames=10, cam_original_orientation = cam_original_orientation)
+    cam_position = get_cam_position(angle=math.radians(-degree * 2.0 / no_frames), no_frames=no_frames, cam_original_position=cam_original_position, k=2)
+    cam_orientation = get_cam_orientation(angle=math.radians(degree * 2.0 * scale / no_frames), no_frames=no_frames, cam_original_orientation = cam_original_orientation)
 
     """ FOR FASTEST PROJECTION, SET multithread and fill_blank to False """
-    project_and_draw(pts1, cam_position, cam_orientation, 0, 10, multithread=False, fill_blank = False)
+    project_and_draw(pts1, cam_position, cam_orientation, 0, 10, multithread=True, fill_blank = True)
 
 def draw_image(pts, filename = "frame.png", use_cloud = False, fill_blank=False):
     """
@@ -85,10 +85,8 @@ def draw_image(pts, filename = "frame.png", use_cloud = False, fill_blank=False)
     if fill_blank:
         print "Dilation #1"
         projection_matrix = dilate_and_sky(projection_matrix)
-        # print "Dilation #2"
-        # projection_matrix = dilate(projection_matrix)
 
-    cv2.imwrite(filename ,projection_matrix)
+    cv2.imwrite(filename ,projection_matrix[:900, 400:])
 
 
 def project_and_draw(pts, cam_position, cam_orientation, start_frame, end_frame, multithread = False, fill_blank = False):
@@ -105,12 +103,17 @@ def project_and_draw(pts, cam_position, cam_orientation, start_frame, end_frame,
     pts[x,y,1] = color
     pts[x,y,2] = (x, y) of projected points
     """
+    pool = Pool()
     for frame in range(start_frame, end_frame+1):
         if multithread:
-            p = Process(target=project_and_draw_single_frame, args=(pts, cam_position, cam_orientation, frame, fill_blank))
-            p.start()
+             #use all available cores, otherwise specify the number you want as an argument
+            pool.apply_async(project_and_draw_single_frame, args=(pts, cam_position, cam_orientation, frame, fill_blank))
+            #p = Process(target=project_and_draw_single_frame, args=(pts, cam_position, cam_orientation, frame, fill_blank))
+            #p.start()
         else:
             project_and_draw_single_frame(pts, cam_position, cam_orientation, frame, fill_blank)
+    pool.close()
+    pool.join()
 
 def project_and_draw_single_frame(pts, cam_position, cam_orientation, frame, fill_blank=False):
     """
@@ -139,7 +142,7 @@ def project_and_draw_single_frame(pts, cam_position, cam_orientation, frame, fil
                         new_pts[x,y,2].append((x_projected, y_projected))
                     else:
                         new_pts[x,y,2] = [(x_projected, y_projected)]
-    draw_image(new_pts, "frame_%d.png" % frame, use_cloud=False,fill_blank=fill_blank)
+    draw_image(new_pts, "result/frame_%d.png" % frame, use_cloud=False,fill_blank=fill_blank)
     print "Save frame_%d.png" % frame
 
 def get_cam_position(angle = -np.pi/6, no_frames = 12, cam_original_position = [0,0,100,-5 * 100], k = 2):

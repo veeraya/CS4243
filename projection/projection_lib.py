@@ -30,8 +30,8 @@ def dilate_and_sky(img):
     num_row = img.shape[0]
     num_col = img.shape[1]
     color = np.array([255,255,255])
-    for y in range(num_row-2, -1, -1):
-        for x in range(num_col-2, -1, -1):
+    for y in range(num_row-150, -1, -1):
+        for x in range(num_col-2, 76, -1):
             if all(img[y,x]==color):
                 # dilate
                 if not all(img[y,x-1] ==color):
@@ -46,6 +46,14 @@ def dilate_and_sky(img):
                     img[y,x] = img[y-2,x]
                 elif not all(img[y-3,x] == color):
                    img[y,x] = img[y-3,x]
+                elif not all(img[y,x-4] ==color):
+                    img[y,x] = img[y,x-4]
+                elif not all(img[y,x-5] == color):
+                    img[y,x] = img[y,x-5]
+                elif not all(img[y-4,x] == color):
+                    img[y,x] = img[y-4,x]
+                elif not all(img[y-5,x] == color):
+                    img[y,x] = img[y-5,x]
                 # put sky
                 elif 75 <= x < sky.shape[1] and y < 740:
                     img[y,x] = sky[y,x]
