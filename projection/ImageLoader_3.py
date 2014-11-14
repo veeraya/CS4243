@@ -29,7 +29,7 @@ mat_allPixelWDepth = np.ones((img.shape[1],img.shape[0],3),dtype = object)
 
 					#Matrix to store depth for corresponding pixel
 
-selectionOption = ["Buildings - front face", "Building - no side face","Building - no side face (Slant)", "Building - partial side face  RtoL","Building - partial side face  LtoR",  "Grass","Sky"]
+selectionOption = ["Buildings - front face", "Building - no side face","Building - no side face (H)", "Building - no side face (Slant)", "Building - partial side face  RtoL","Building - partial side face  LtoR",  "Grass","Sky"]
 
 class ImageLoad(QtGui.QMainWindow, form_class):
 	def __init__(self, parent=None):
@@ -188,18 +188,29 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 			QtGui.QMessageBox.critical(self, "Warning", "This depth will be applied to all the pixels lying on the selected face of the building")
 			listBuildingPointsWithDepth.append(temp)
 			numberOfBuildingSelected += 1
+
 		elif(selectedOption == 'Building - no side face'):
 			length, ok = QtGui.QInputDialog.getInt(self, "Length of the side wall",
 		        "Enter expected length of the wall currently not visible", QtGui.QLineEdit.Normal, 1, 1073741824)
 			temp = [str(selectedOption),setsOfPoints,enteredDepth,length]
 			QtGui.QMessageBox.critical(self, "Warning", "This depth will be used to assign depth to all the pixels of the hidden wall")
 			listBuildingPointsWithDepth.append(temp)
+
+#Building - no side face (H)
+		elif(selectedOption == "Building - no side face (H)"):
+			length, ok = QtGui.QInputDialog.getInt(self, "Length of the side wall",
+		        "Enter expected length of the wall currently not visible", QtGui.QLineEdit.Normal, 1, 1073741824)
+			temp = [str(selectedOption),setsOfPoints,enteredDepth,length]
+			QtGui.QMessageBox.critical(self, "Warning", "This depth will be used to assign depth to all the pixels of the hidden wall")
+			listBuildingPointsWithDepth.append(temp)
+
 		elif(selectedOption == "Building - no side face (Slant)"):
 			length, ok = QtGui.QInputDialog.getInt(self, "Length of the side wall",
 		        "Enter expected length of the wall currently not visible", QtGui.QLineEdit.Normal, 1, 1073741824)
 			temp = [str(selectedOption),setsOfPoints,enteredDepth,length]
 			QtGui.QMessageBox.critical(self, "Warning", "This depth will be used to assign depth to all the pixels of the hidden Slant wall")
 			listBuildingPointsWithDepth.append(temp)
+
 		elif(selectedOption == "Building - partial side face  RtoL"):
 			length, ok = QtGui.QInputDialog.getInt(self, "Length of the side wall",
 		        "Enter length of the side wall", QtGui.QLineEdit.Normal, 1, 1073741824)
@@ -333,6 +344,24 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 					mat_allPixelWDepth[min_x,q,0] = depth 
 					depth = ()
 					print "mat_allPixelWDepth[min_x,q,0] : ",mat_allPixelWDepth[min_x,q,0]
+
+#Building - no side face (H)
+
+			elif(str(listWDepth[i][0]) == "Building - no side face (H)"):
+				print "Setting pixels for horizontal face that is not visible\n"
+				depth_int = depth
+				depth = (depth_int,)
+				length = listWDepth[i][3]
+				for p in range(min_x,max_x):
+					point = (p,min_y)
+					for i in range(1,length):
+						depth = depth + ((depth_int+i),)	#making the tuple that holds multiple depths
+					listPixelWDepth.append([point,depth])
+					mat_allPixelWDepth[min_x,q,0] = depth 
+					depth = ()
+					print "mat_allPixelWDepth[min_x,q,0] : ",mat_allPixelWDepth[min_x,q,0]
+
+
 			elif(str(listWDepth[i][0]) == "Building - no side face (Slant)"):
 				print "Setting pixels for SLANTED face that is not visible\n"
 				print "Min_x : ",min_x
@@ -466,7 +495,7 @@ class ImageLoad(QtGui.QMainWindow, form_class):
 				self.skyGrassCheck.setCheckState(0)
 				selectionOption_2 = []
 				self.optionsList.addItems(selectionOption_2)
-				selectionOption_2 = ["Buildings - front face", "Building - no side face","Building - no side face (Slant)","Building - partial side face  RtoL", "Building - partial side face  LtoR"]
+				selectionOption_2 = ["Buildings - front face", "Building - no side face","Building - no side face (H)" , "Building - no side face (Slant)","Building - partial side face  RtoL", "Building - partial side face  LtoR"]
 				self.optionsList.addItems(selectionOption_2)
 
 		
