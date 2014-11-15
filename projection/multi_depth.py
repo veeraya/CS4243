@@ -104,7 +104,7 @@ def project_and_draw(pts, cam_position, cam_orientation, start_frame, end_frame,
     pts[x,y,1] = color
     pts[x,y,2] = (x, y) of projected points
     """
-    pool = Pool(3)
+    pool = Pool()
     for frame in range(start_frame, end_frame+1):
         if multithread:
              #use all available cores, otherwise specify the number you want as an argument
@@ -143,7 +143,7 @@ def project_and_draw_single_frame(pts, cam_position, cam_orientation, frame, fil
                         new_pts[x,y,2].append((x_projected, y_projected))
                     else:
                         new_pts[x,y,2] = [(x_projected, y_projected)]
-    draw_image(new_pts, "result/frame_%d.png" % frame, use_cloud=False,fill_blank=fill_blank, shift=frame*-5)
+    draw_image(new_pts, "result/frame_%d.png" % frame, use_cloud=False,fill_blank=fill_blank, shift=round(frame*5))
     print "Save frame_%d.png" % frame
 
 def get_cam_position(angle = -np.pi/6, no_frames = 12, cam_original_position = [0,0,100,-5 * 100], k = 2):

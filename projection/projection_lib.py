@@ -55,7 +55,7 @@ def dilate_and_sky(img, shift=0):
                 elif not all(img[y-5,x] == color):
                     img[y,x] = img[y-5,x]
                 # put sky
-                elif 75 <= x < sky.shape[1] and y < 740:
+                elif 75 <= x < sky.shape[1] - shift and y < 740 and x + shift >= 0:
                   img[y,x] = sky[y,round(x+shift)]
     return img
 

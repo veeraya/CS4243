@@ -13,7 +13,9 @@ def main():
     file_in2 = "data/h_side.pkl"
     file_out = "data/abcdefgh.pkl"
     #combined_data(file_in1, file_in2, file_out)
-    combined_data_multiple(["data/il.pkl", "data/g.pkl", "data/fd.pkl", "data/he.pkl", "data/jk.pkl"], "combined.pkl")
+    #combined_data_multiple(["data/il.pkl", "data/g.pkl", "data/fd.pkl", "data/he.pkl", "data/jk.pkl"], "data/combined.pkl")
+    combined_data_multiple(["data/f.pkl","data/e.pkl", "data/h.pkl"], "data/feh.pkl")
+
 
 def combined_data(file_in1, file_in2, file_out):
     print "Reading file1"
@@ -45,7 +47,7 @@ def combined_data_multiple(files, file_out):
     pkl_file = open(files[0], 'rU')
     pts1 = pickle.load(pkl_file)
     for i in range(1, len(files)):
-        "Reading", files[i]
+        print "Reading", files[i]
         pkl_file2 = open(files[i], 'rU')
         pts2 = pickle.load(pkl_file2)
 
@@ -61,7 +63,7 @@ def combined_data_multiple(files, file_out):
                 elif type(z1) != int and type(z2) != int:
                     pts1[r,c,0] = np.concatenate((z1, z2)).tolist()
 
-    "Writing output"
+    print "Writing output"
     output = open(file_out, 'wb')
     pickle.dump(pts1, output)
     output.close()
