@@ -37,15 +37,16 @@ def main():
     degree = 50
     no_frames = 10
     scale = 1
-    cam_original_position = get_cam_position(angle=math.radians(degree), no_frames = 1, cam_original_position=[0,0,610,-8 * 100], k=2)[1]
+    k = 2
+    cam_original_position = get_cam_position(angle=math.radians(degree), no_frames = 1, cam_original_position=[0,0,610,-8 * 100], k=k)[1]
     cam_original_orientation = get_cam_orientation(angle=math.radians(-degree * scale), no_frames = 1)[1]#np.matrix([[0.5,0.,-0.8660254],[0.,1.,0.],[0.8660254,0.,0.5]])
-    cam_position = get_cam_position(angle=math.radians(-degree * 2.0 / no_frames), no_frames=no_frames, cam_original_position=cam_original_position, k=2)
+    cam_position = get_cam_position(angle=math.radians(-degree * 2.0 / no_frames), no_frames=no_frames, cam_original_position=cam_original_position, k=k)
     cam_orientation = get_cam_orientation(angle=math.radians(degree * 2.0 * scale / no_frames), no_frames=no_frames, cam_original_orientation = cam_original_orientation)
 
     """ FOR FASTEST PROJECTION, SET multithread and fill_blank to False """
-    project_and_draw(pts1, cam_position, cam_orientation, 0, no_frames-1, multithread=True, fill_blank = True)
+    project_and_draw(pts1, cam_position, cam_orientation, 0, no_frames-1, multithread=True, fill_blank = False)
 
-def draw_image(pts, filename = "frame.png", use_cloud = False, fill_blank=False):
+def draw_image(pts, filename = "frame.png", use_cloud = False, fill_blank=False, shift=0):
     """
     Draw a single image from list of points
     :param pts: list of points of an image
@@ -84,7 +85,7 @@ def draw_image(pts, filename = "frame.png", use_cloud = False, fill_blank=False)
                         min_depth_arr[y_proj,x_proj] = z
     if fill_blank:
         print "Dilation #1"
-        projection_matrix = dilate_and_sky(projection_matrix)
+        projection_matrix = dilate_and_sky(projection_matrix, shift=shift)
 
     cv2.imwrite(filename ,projection_matrix[:900, 400:])
 
@@ -103,7 +104,7 @@ def project_and_draw(pts, cam_position, cam_orientation, start_frame, end_frame,
     pts[x,y,1] = color
     pts[x,y,2] = (x, y) of projected points
     """
-    pool = Pool()
+    pool = Pool(3)
     for frame in range(start_frame, end_frame+1):
         if multithread:
              #use all available cores, otherwise specify the number you want as an argument
@@ -142,7 +143,7 @@ def project_and_draw_single_frame(pts, cam_position, cam_orientation, frame, fil
                         new_pts[x,y,2].append((x_projected, y_projected))
                     else:
                         new_pts[x,y,2] = [(x_projected, y_projected)]
-    draw_image(new_pts, "result/frame_%d.png" % frame, use_cloud=False,fill_blank=fill_blank)
+    draw_image(new_pts, "result/frame_%d.png" % frame, use_cloud=False,fill_blank=fill_blank, shift=frame*-5)
     print "Save frame_%d.png" % frame
 
 def get_cam_position(angle = -np.pi/6, no_frames = 12, cam_original_position = [0,0,100,-5 * 100], k = 2):

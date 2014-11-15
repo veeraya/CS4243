@@ -25,7 +25,7 @@ def dilate(img):
     return img
 
 
-def dilate_and_sky(img):
+def dilate_and_sky(img, shift=0):
     sky = cv2.imread('sky.jpg')
     num_row = img.shape[0]
     num_col = img.shape[1]
@@ -56,7 +56,7 @@ def dilate_and_sky(img):
                     img[y,x] = img[y-5,x]
                 # put sky
                 elif 75 <= x < sky.shape[1] and y < 740:
-                    img[y,x] = sky[y,x]
+                  img[y,x] = sky[y,round(x+shift)]
     return img
 
 def quatmult(p, q):
